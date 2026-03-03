@@ -10,9 +10,9 @@
  * No auth required. Low bot-detection risk (public government site).
  */
 
-import fetch from 'node-fetch';
 import { log } from 'apify';
-import { parseDate, normalizeText, extractDocumentType } from '../utils/helpers.js';
+import { normalizeText, extractDocumentType } from '../utils/helpers.js';
+import { fetchText } from '../utils/http.js';
 
 const BASE_URL = 'https://magyarkozlony.hu';
 const LISTING_URL = `${BASE_URL}/`;
@@ -20,11 +20,11 @@ const LISTING_URL = `${BASE_URL}/`;
 // CSS selectors for the listing page
 const ISSUE_LINK_PATTERN = /\/hivatalos-lapok\/[A-Za-z0-9]+/;
 
-export async function scrapeMagyarKozlony({ max_items_per_source = 100, date_from = null }) {
+export async function scrapeMagyarKozlony({ max_items_per_source = 100, date_from = null, proxyUrl = null }) {
     const results = [];
 
     // Step 1: Fetch main listing page
-    const html = await fetchHTML(LISTING_URL);
+    const html = await fetchHTML(LISTING_URL, proxyUrl);
     if (!html) {
         log.warning('Magyar Közlöny: Could not fetch listing page');
         return results;
@@ -41,7 +41,7 @@ export async function scrapeMagyarKozlony({ max_items_per_source = 100, date_fro
 
         try {
             const issueUrl = `${BASE_URL}${issueLink}`;
-            const issueHtml = await fetchHTML(issueUrl);
+            const issueHtml = await fetchHTML(issueUrl, proxyUrl);
             if (!issueHtml) continue;
 
             const items = parseIssueItems(issueHtml, issueUrl, date_from);
@@ -63,17 +63,23 @@ export async function scrapeMagyarKozlony({ max_items_per_source = 100, date_fro
 
 function extractIssueLinks(html) {
     const links = [];
-    // Match all issue hrefs — pattern: /hivatalos-lapok/{id}
-    const regex = /href="(\/hivatalos-lapok\/[A-Za-z0-9_\-]+)"/g;
+
+    // Site often uses absolute URLs in href.
+    // Examples:
+    //  - https://magyarkozlony.hu/hivatalos-lapok/<issueId>/dokumentumok/<docId>/letoltes
+    //  - /hivatalos-lapok/<issueId>/...
+    const regex = /href="(https?:\/\/[^\"]+)?(\/hivatalos-lapok\/[^\/\"\s]+)[^\"]*"/gi;
     let match;
     const seen = new Set();
     while ((match = regex.exec(html)) !== null) {
-        if (!seen.has(match[1])) {
-            seen.add(match[1]);
-            links.push(match[1]);
+        const path = match[2];
+        if (path && !seen.has(path)) {
+            seen.add(path);
+            links.push(path);
         }
     }
-    return links.slice(0, 15); // Max 15 recent issues per run
+
+    return links.slice(0, 20); // recent issues per run
 }
 
 function parseIssueItems(html, issueUrl, date_from) {
@@ -108,6 +114,7 @@ function parseIssueItems(html, issueUrl, date_from) {
     // Fallback: extract all <h2> and <h3> as document titles
     if (docTitles.length === 0) {
         const hRegex = /<h[23][^>]*>([^<]{10,200})<\/h[23]>/gi;
+        let match;
         while ((match = hRegex.exec(html)) !== null) {
             docTitles.push(normalizeText(match[1]));
         }
@@ -157,25 +164,17 @@ function parseHungarianDate(dateStr) {
     return `${m[1]}-${month}-${m[3].padStart(2, '0')}`;
 }
 
-async function fetchHTML(url) {
-    try {
-        const response = await fetch(url, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (compatible; ApifyBot/1.0; +https://apify.com/bots)',
-                'Accept': 'text/html,application/xhtml+xml',
-                'Accept-Language': 'hu-HU,hu;q=0.9,en;q=0.5',
-            },
-            timeout: 30000,
-        });
-        if (!response.ok) {
-            log.warning(`HTTP ${response.status} for ${url}`);
-            return null;
-        }
-        return await response.text();
-    } catch (err) {
-        log.warning(`Fetch failed: ${url}`, { error: err.message });
-        return null;
-    }
+async function fetchHTML(url, proxyUrl) {
+    const html = await fetchText(url, {
+        proxyUrl: proxyUrl || undefined,
+        timeoutMs: 30000,
+        headers: {
+            'User-Agent': 'Mozilla/5.0 (compatible; ApifyBot/1.0; +https://apify.com/bots)',
+            'Accept': 'text/html,application/xhtml+xml',
+            'Accept-Language': 'hu-HU,hu;q=0.9,en;q=0.5',
+        },
+    });
+    return html;
 }
 
 function buildItem(fields) {

@@ -10,9 +10,9 @@
  * Note: e-cegjegyzek.hu serves structured HTML with minimal JS; low anti-bot risk.
  */
 
-import fetch from 'node-fetch';
 import { log } from 'apify';
 import { normalizeText, stripHTML } from '../utils/helpers.js';
+import { fetchText } from '../utils/http.js';
 
 const BASE_URL = 'https://www.e-cegjegyzek.hu';
 
@@ -31,14 +31,14 @@ const EVENT_TYPE_PATTERNS = [
     { pattern: /hirdetmény/i,        type: 'hirdetmény' },
 ];
 
-export async function scrapeCegkozlony({ max_items_per_source = 100, date_from = null, event_types = [] }) {
+export async function scrapeCegkozlony({ max_items_per_source = 100, date_from = null, event_types = [], proxyUrl = null }) {
     const results = [];
 
     // Fetch the Cégközlöny listing
-    const html = await fetchHTML(CEGKOZLONY_URL);
+    const html = await fetchHTML(CEGKOZLONY_URL, proxyUrl);
     if (!html) {
         log.warning('Cégközlöny: Could not fetch listing page. Trying alternative URL...');
-        return await scrapeCegkozlonyAlternative({ max_items_per_source, date_from, event_types });
+        return await scrapeCegkozlonyAlternative({ max_items_per_source, date_from, event_types, proxyUrl });
     }
 
     // Extract issue links
@@ -51,7 +51,7 @@ export async function scrapeCegkozlony({ max_items_per_source = 100, date_from =
 
         try {
             const issueUrl = link.startsWith('http') ? link : `${BASE_URL}${link}`;
-            const issueHtml = await fetchHTML(issueUrl);
+            const issueHtml = await fetchHTML(issueUrl, proxyUrl);
             if (!issueHtml) continue;
 
             const items = parseCegkozlonyIssue(issueHtml, issueUrl, date_from, event_types);
@@ -71,17 +71,17 @@ export async function scrapeCegkozlony({ max_items_per_source = 100, date_from =
 }
 
 // Fallback: Use Cégközlöny PDF listing from kozlonyok.hu
-async function scrapeCegkozlonyAlternative({ max_items_per_source, date_from, event_types }) {
+async function scrapeCegkozlonyAlternative({ max_items_per_source, date_from, event_types, proxyUrl }) {
     const results = [];
     const ALT_URL = 'https://www.kozlonyok.hu/nkonline/index.php?pageindex=0400';
 
-    const html = await fetchHTML(ALT_URL);
+    const html = await fetchHTML(ALT_URL, proxyUrl);
     if (!html) return results;
 
     // Extract year links, use current year
     const year = new Date().getFullYear();
     const yearUrl = `${ALT_URL}&ev=${year}`;
-    const yearHtml = await fetchHTML(yearUrl);
+    const yearHtml = await fetchHTML(yearUrl, proxyUrl);
     if (!yearHtml) return results;
 
     // Parse issue rows
@@ -212,21 +212,16 @@ function detectEventType(text, filterTypes) {
     return filterTypes.length > 0 ? null : 'egyéb';
 }
 
-async function fetchHTML(url) {
-    try {
-        const response = await fetch(url, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (compatible; ApifyBot/1.0; +https://apify.com/bots)',
-                'Accept': 'text/html,application/xhtml+xml',
-                'Accept-Language': 'hu-HU,hu;q=0.9',
-            },
-            timeout: 30000,
-        });
-        if (!response.ok) return null;
-        return await response.text();
-    } catch {
-        return null;
-    }
+async function fetchHTML(url, proxyUrl) {
+    return await fetchText(url, {
+        proxyUrl: proxyUrl || undefined,
+        timeoutMs: 30000,
+        headers: {
+            'User-Agent': 'Mozilla/5.0 (compatible; ApifyBot/1.0; +https://apify.com/bots)',
+            'Accept': 'text/html,application/xhtml+xml',
+            'Accept-Language': 'hu-HU,hu;q=0.9',
+        },
+    });
 }
 
 function generateId(source, url, title) {

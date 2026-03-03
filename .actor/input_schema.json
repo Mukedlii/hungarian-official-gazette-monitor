@@ -95,6 +95,21 @@
             "description": "If set, a POST request with the results will be sent to this URL at the end of each run.",
             "editor": "textfield",
             "example": "https://hooks.zapier.com/hooks/catch/..."
+        },
+        "use_apify_proxy": {
+            "title": "Use Apify Proxy",
+            "type": "boolean",
+            "description": "Use Apify Proxy for requests (recommended if some sources block data center IPs).",
+            "default": true,
+            "editor": "checkbox"
+        },
+        "apify_proxy_groups": {
+            "title": "Apify Proxy groups",
+            "type": "array",
+            "description": "Proxy groups to use (e.g. RESIDENTIAL). If you don't have access, disable proxy.",
+            "editor": "stringList",
+            "default": ["RESIDENTIAL"],
+            "items": { "type": "string" }
         }
     },
     "required": ["sources"]

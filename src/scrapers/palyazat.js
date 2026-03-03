@@ -8,10 +8,10 @@
  *   - Output clean structured data per grant item
  */
 
-import fetch from 'node-fetch';
 import { parseStringPromise } from 'xml2js';
 import { log } from 'apify';
 import { normalizeText, stripHTML } from '../utils/helpers.js';
+import { fetchText } from '../utils/http.js';
 
 const RSS_URLS = [
     'https://www.palyazat.gov.hu/rss.php',
@@ -19,13 +19,13 @@ const RSS_URLS = [
     'https://www.palyazat.gov.hu/?rss',
 ];
 
-export async function scrapePalyazat({ max_items_per_source = 100, date_from = null }) {
+export async function scrapePalyazat({ max_items_per_source = 100, date_from = null, proxyUrl = null }) {
     const results = [];
 
     // Try each RSS URL until one works
     for (const rssUrl of RSS_URLS) {
         log.info(`Pályázati Portál: Trying RSS at ${rssUrl}`);
-        const items = await fetchRSSItems(rssUrl, max_items_per_source, date_from);
+        const items = await fetchRSSItems(rssUrl, max_items_per_source, date_from, proxyUrl);
         if (items.length > 0) {
             log.info(`Pályázati Portál: Got ${items.length} items from ${rssUrl}`);
             results.push(...items);
@@ -36,27 +36,26 @@ export async function scrapePalyazat({ max_items_per_source = 100, date_from = n
     // Fallback: scrape HTML listing if RSS fails
     if (results.length === 0) {
         log.info('Pályázati Portál: RSS failed, falling back to HTML scrape');
-        const htmlItems = await scrapePalyazatHTML(max_items_per_source, date_from);
+        const htmlItems = await scrapePalyazatHTML(max_items_per_source, date_from, proxyUrl);
         results.push(...htmlItems);
     }
 
     return results;
 }
 
-async function fetchRSSItems(rssUrl, maxItems, date_from) {
+async function fetchRSSItems(rssUrl, maxItems, date_from, proxyUrl) {
     const items = [];
     try {
-        const response = await fetch(rssUrl, {
+        const xml = await fetchText(rssUrl, {
+            proxyUrl: proxyUrl || undefined,
+            timeoutMs: 20000,
             headers: {
                 'User-Agent': 'Mozilla/5.0 (compatible; ApifyBot/1.0; +https://apify.com/bots)',
                 'Accept': 'application/rss+xml, application/xml, text/xml',
             },
-            timeout: 20000,
         });
 
-        if (!response.ok) return items;
-
-        const xml = await response.text();
+        if (!xml) return items;
         const parsed = await parseStringPromise(xml, { explicitArray: false });
 
         const channel = parsed?.rss?.channel ?? parsed?.feed;
@@ -108,22 +107,21 @@ async function fetchRSSItems(rssUrl, maxItems, date_from) {
     return items;
 }
 
-async function scrapePalyazatHTML(maxItems, date_from) {
+async function scrapePalyazatHTML(maxItems, date_from, proxyUrl) {
     const items = [];
     const BASE = 'https://www.palyazat.gov.hu';
     const LISTING = `${BASE}/palyazatok`;
 
     try {
-        const response = await fetch(LISTING, {
+        const html = await fetchText(LISTING, {
+            proxyUrl: proxyUrl || undefined,
+            timeoutMs: 25000,
             headers: {
                 'User-Agent': 'Mozilla/5.0 (compatible; ApifyBot/1.0; +https://apify.com/bots)',
                 'Accept-Language': 'hu-HU,hu;q=0.9',
             },
-            timeout: 25000,
         });
-        if (!response.ok) return items;
-
-        const html = await response.text();
+        if (!html) return items;
 
         // Parse grant listing items
         const linkRegex = /href="(\/palyazat\/[^"]+)"/gi;

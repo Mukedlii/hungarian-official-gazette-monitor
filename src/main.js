@@ -29,7 +29,16 @@ const {
     date_from           = null,
     output_language     = 'en',
     webhook_url         = null,
+    // If true, use Apify Proxy for requests. Useful when sites block Apify data center IPs.
+    use_apify_proxy     = true,
+    apify_proxy_groups  = ['RESIDENTIAL'],
 } = input;
+
+const proxyConfiguration = use_apify_proxy
+  ? await Actor.createProxyConfiguration({ groups: apify_proxy_groups })
+  : null;
+
+const proxyUrl = proxyConfiguration ? await proxyConfiguration.newUrl() : null;
 
 log.info('Hungarian Official Gazette Monitor starting', {
     sources,
@@ -47,7 +56,7 @@ let allResults = [];
 if (sources.includes('magyar_kozlony')) {
     log.info('Scraping Magyar Közlöny...');
     try {
-        const items = await scrapeMagyarKozlony({ max_items_per_source, date_from });
+        const items = await scrapeMagyarKozlony({ max_items_per_source, date_from, proxyUrl });
         log.info(`Magyar Közlöny: ${items.length} raw items fetched`);
         allResults.push(...items);
     } catch (err) {
@@ -63,6 +72,7 @@ if (sources.includes('cegkozlony')) {
             max_items_per_source,
             date_from,
             event_types: cegkozlony_event_types,
+            proxyUrl,
         });
         log.info(`Cégközlöny: ${items.length} raw items fetched`);
         allResults.push(...items);
@@ -75,7 +85,7 @@ if (sources.includes('cegkozlony')) {
 if (sources.includes('palyazati_portal')) {
     log.info('Scraping Pályázati Portál RSS...');
     try {
-        const items = await scrapePalyazat({ max_items_per_source, date_from });
+        const items = await scrapePalyazat({ max_items_per_source, date_from, proxyUrl });
         log.info(`Pályázati Portál: ${items.length} raw items fetched`);
         allResults.push(...items);
     } catch (err) {
