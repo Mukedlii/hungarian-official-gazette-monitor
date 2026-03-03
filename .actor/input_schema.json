@@ -9,7 +9,7 @@
             "type": "array",
             "description": "Which official sources to scrape. Select one or more.",
             "editor": "select",
-            "default": ["magyar_kozlony", "cegkozlony", "palyazati_portal"],
+            "default": ["magyar_kozlony"],
             "items": {
                 "type": "string",
                 "enum": ["magyar_kozlony", "cegkozlony", "palyazati_portal"],
@@ -99,8 +99,8 @@
         "use_apify_proxy": {
             "title": "Use Apify Proxy",
             "type": "boolean",
-            "description": "Use Apify Proxy for requests (recommended if some sources block data center IPs).",
-            "default": true,
+            "description": "Use Apify Proxy for requests (recommended if some sources block data center IPs). Free plan may not include RESIDENTIAL proxies.",
+            "default": false,
             "editor": "checkbox"
         },
         "apify_proxy_groups": {

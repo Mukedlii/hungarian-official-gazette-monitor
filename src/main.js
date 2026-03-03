@@ -30,7 +30,8 @@ const {
     output_language     = 'en',
     webhook_url         = null,
     // If true, use Apify Proxy for requests. Useful when sites block Apify data center IPs.
-    use_apify_proxy     = true,
+    // NOTE: Free plan typically doesn't include RESIDENTIAL proxies.
+    use_apify_proxy     = false,
     apify_proxy_groups  = ['RESIDENTIAL'],
 } = input;
 
