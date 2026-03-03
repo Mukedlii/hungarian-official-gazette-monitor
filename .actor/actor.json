@@ -5,7 +5,7 @@
     "description": "Monitor Magyar Közlöny, Cégközlöny & Pályázati Portál for new laws, company events (liquidation, bankruptcy, registration) and grant opportunities. Delta mode returns only new entries since your last run.",
     "version": "1.0",
     "buildTag": "latest",
-    "environmentVariables": [],
+    "environmentVariables": {},
     "dockerfile": "./Dockerfile",
     "readme": "./README.md",
     "input": "./input_schema.json",
