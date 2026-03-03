@@ -8,7 +8,8 @@
             "title": "Sources to monitor",
             "type": "array",
             "description": "Which official sources to scrape. Select one or more.",
-            "editor": "checkboxes",
+            "editor": "select",
+            "isMultiple": true,
             "default": ["magyar_kozlony", "cegkozlony", "palyazati_portal"],
             "items": {
                 "type": "string",
@@ -32,7 +33,8 @@
             "title": "Cégközlöny – Event types to filter",
             "type": "array",
             "description": "Filter Cégközlöny entries by event type. Leave empty for all types.",
-            "editor": "checkboxes",
+            "editor": "select",
+            "isMultiple": true,
             "default": [],
             "items": {
                 "type": "string",
