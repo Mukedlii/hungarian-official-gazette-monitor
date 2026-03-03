@@ -1,0 +1,44 @@
+{
+    "actorSpecification": 1,
+    "name": "hungarian-official-gazette-monitor",
+    "title": "Hungarian Official Gazette Monitor",
+    "description": "Monitor Magyar Közlöny, Cégközlöny & Pályázati Portál for new laws, company events (liquidation, bankruptcy, registration) and grant opportunities. Delta mode returns only new entries since your last run.",
+    "version": "1.0",
+    "buildTag": "latest",
+    "environmentVariables": [],
+    "dockerfile": "./Dockerfile",
+    "readme": "./README.md",
+    "input": "./input_schema.json",
+    "storages": {
+        "dataset": {
+            "actorSpecification": 1,
+            "fields": {},
+            "views": {
+                "overview": {
+                    "title": "Results overview",
+                    "transformation": {
+                        "fields": [
+                            "source",
+                            "issue_number",
+                            "title",
+                            "event_type",
+                            "published_date",
+                            "url",
+                            "keywords_matched"
+                        ]
+                    },
+                    "display": {
+                        "component": "table",
+                        "properties": {
+                            "source": { "label": "Source", "format": "text" },
+                            "title": { "label": "Title", "format": "text" },
+                            "event_type": { "label": "Event Type", "format": "text" },
+                            "published_date": { "label": "Published", "format": "date" },
+                            "url": { "label": "Link", "format": "link" }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

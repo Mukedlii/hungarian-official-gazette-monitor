@@ -1,0 +1,101 @@
+{
+    "title": "Hungarian Official Gazette Monitor",
+    "description": "Monitor Magyar Közlöny (Hungarian Official Gazette), Cégközlöny (Company Gazette) and Pályázati Portál (Grant Portal) for new entries. Returns structured delta data — only new items since your last run.",
+    "type": "object",
+    "schemaVersion": 1,
+    "properties": {
+        "sources": {
+            "title": "Sources to monitor",
+            "type": "array",
+            "description": "Which official sources to scrape. Select one or more.",
+            "editor": "checkboxes",
+            "default": ["magyar_kozlony", "cegkozlony", "palyazati_portal"],
+            "items": {
+                "type": "string",
+                "enum": ["magyar_kozlony", "cegkozlony", "palyazati_portal"],
+                "enumTitles": [
+                    "Magyar Közlöny (Official Gazette)",
+                    "Cégközlöny (Company Gazette)",
+                    "Pályázati Portál (Grant Portal)"
+                ]
+            }
+        },
+        "keywords": {
+            "title": "Keyword filter (optional)",
+            "type": "array",
+            "description": "Only return items whose title contains at least one of these keywords (case-insensitive, Hungarian accent-insensitive). Leave empty for all items.",
+            "editor": "stringList",
+            "default": [],
+            "example": ["adó", "rendelet", "felszámolás", "pályázat"]
+        },
+        "cegkozlony_event_types": {
+            "title": "Cégközlöny – Event types to filter",
+            "type": "array",
+            "description": "Filter Cégközlöny entries by event type. Leave empty for all types.",
+            "editor": "checkboxes",
+            "default": [],
+            "items": {
+                "type": "string",
+                "enum": [
+                    "felszámolás",
+                    "végelszámolás",
+                    "csődeljárás",
+                    "cégbejegyzés",
+                    "törlés",
+                    "változásbejegyzés",
+                    "végrehajtás"
+                ],
+                "enumTitles": [
+                    "Felszámolás (Liquidation)",
+                    "Végelszámolás (Voluntary liquidation)",
+                    "Csődeljárás (Bankruptcy)",
+                    "Cégbejegyzés (Company registration)",
+                    "Törlés (Deletion)",
+                    "Változásbejegyzés (Change registration)",
+                    "Végrehajtás (Enforcement)"
+                ]
+            }
+        },
+        "delta_mode": {
+            "title": "Delta mode (only new items)",
+            "type": "boolean",
+            "description": "If true, only return items not seen in previous runs (uses Apify Key-Value Store for deduplication). If false, return all items from the current feed.",
+            "default": true,
+            "editor": "checkbox"
+        },
+        "max_items_per_source": {
+            "title": "Max items per source",
+            "type": "integer",
+            "description": "Maximum number of items to return per source per run. 0 = unlimited.",
+            "default": 100,
+            "minimum": 0,
+            "maximum": 5000,
+            "editor": "number"
+        },
+        "date_from": {
+            "title": "Date from (optional, YYYY-MM-DD)",
+            "type": "string",
+            "description": "Only include items published on or after this date. Overrides delta mode for historical pulls.",
+            "editor": "textfield",
+            "example": "2025-01-01",
+            "pattern": "^(\\d{4}-\\d{2}-\\d{2})?$"
+        },
+        "output_language": {
+            "title": "Output field language",
+            "type": "string",
+            "description": "Language of output field names and event type labels.",
+            "editor": "select",
+            "enum": ["hu", "en"],
+            "enumTitles": ["Magyar (Hungarian)", "English"],
+            "default": "en"
+        },
+        "webhook_url": {
+            "title": "Webhook URL (optional)",
+            "type": "string",
+            "description": "If set, a POST request with the results will be sent to this URL at the end of each run.",
+            "editor": "textfield",
+            "example": "https://hooks.zapier.com/hooks/catch/..."
+        }
+    },
+    "required": ["sources"]
+}
