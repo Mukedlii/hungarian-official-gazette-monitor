@@ -13,7 +13,7 @@ import { scrapeMagyarKozlony } from './scrapers/magyar_kozlony.js';
 import { scrapeCegkozlony }    from './scrapers/cegkozlony.js';
 import { scrapePalyazat }      from './scrapers/palyazat.js';
 import { sendWebhook }         from './utils/webhook.js';
-import { filterItems }         from './utils/filter.js';
+import { filterItems, filterExpiredByDeadline } from './utils/filter.js';
 import { deduplicateItems }    from './utils/dedup.js';
 
 await Actor.init();
@@ -92,6 +92,14 @@ if (sources.includes('palyazati_portal')) {
     } catch (err) {
         log.error('Pályázati Portál scrape failed', { error: err.message });
     }
+}
+
+// ─── Filter expired grants by deadline ───────────────────────────────────────
+{
+    const before = allResults.length;
+    allResults = filterExpiredByDeadline(allResults);
+    const removed = before - allResults.length;
+    if (removed > 0) log.info(`Deadline filter: removed ${removed} expired items`);
 }
 
 // ─── Filter by keywords ───────────────────────────────────────────────────────

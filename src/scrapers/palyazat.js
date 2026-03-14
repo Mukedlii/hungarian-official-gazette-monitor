@@ -179,9 +179,15 @@ function extractAmount(text) {
 }
 
 function extractDeadline(text) {
-    // Match date patterns in descriptions: "2025. március 31." or "2025-03-31"
-    const m = text.match(/(\d{4}[-\.]\s*\w+[-\.]\s*\d{1,2}\.?)/);
-    return m ? m[1].trim() : null;
+    // Common patterns:
+    // - 2025-03-31
+    // - 2025.03.31
+    // - 2025. március 31.
+    const m1 = text.match(/(\d{4}[\.-]\s*\d{1,2}[\.-]\s*\d{1,2})/);
+    if (m1) return m1[1].replace(/\s+/g, '').trim();
+
+    const m2 = text.match(/(\d{4}\.\s*[A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű]+\s*\d{1,2}\.?)/);
+    return m2 ? m2[1].trim() : null;
 }
 
 function extractCategory(title, desc) {
