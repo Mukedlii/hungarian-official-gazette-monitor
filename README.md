@@ -38,14 +38,14 @@ Each item contains:
 {
   "source": "magyar_kozlony",
   "source_label": "Magyar Közlöny",
-  "issue_number": "2025/42",
-  "title": "A Kormány 123/2025. (IV. 15.) Korm. rendelete...",
+  "issue_number": "2026/12",
+  "title": "A Kormány 123/2026. (III. 29.) Korm. rendelete...",
   "event_type": "decree",
-  "published_date": "2025-04-15",
+  "published_date": "2026-03-29",
   "url": "https://magyarkozlony.hu/...",
   "pdf_url": "https://magyarkozlony.hu/.../letoltes",
   "id": "abc123...",
-  "scraped_at": "2025-04-15T08:00:00.000Z"
+  "scraped_at": "2026-03-29T08:00:00.000Z"
 }
 ```
 
@@ -66,7 +66,7 @@ Pályázati Portál items additionally include:
 {
   "category": "KKV",
   "funding_amount": "500 millió forint",
-  "deadline": "2025. június 30.",
+  "deadline": "2026. június 30.",
   "description": "..."
 }
 ```
@@ -120,7 +120,7 @@ Pályázati Portál items additionally include:
 ```json
 {
   "sources": ["magyar_kozlony", "palyazati_portal"],
-  "date_from": "2025-01-01",
+  "date_from": "2025-10-01",
   "delta_mode": false,
   "max_items_per_source": 500
 }
